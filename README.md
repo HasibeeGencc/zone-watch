@@ -19,8 +19,7 @@
 
 ```mermaid
 flowchart LR
-    A[Kaggle Helmet dataset<br/>VOC XML] --> B[CVAT in Docker<br/>review + label webcam frames]
-    W[Own webcam frames] --> B
+    A[Kaggle Helmet dataset<br/>VOC XML] --> B[CVAT in Docker<br/>review + fix boxes]
     B -->|YOLO export| C[scripts/prepare_dataset.py<br/>70/20/10 split + data.yaml]
     C --> D[Colab notebook<br/>fine-tune YOLO]
     D -->|best.pt| E[Zone Watch app<br/>OpenCV + Ultralytics]
@@ -73,7 +72,7 @@ pip install -r requirements.txt
 
 ## Dataset
 
-[Helmet Detection](https://www.kaggle.com/datasets/andrewmvd/helmet-detection) (Kaggle, ~764 images, 2 classes, Pascal VOC) plus ~50 self-recorded webcam frames. Raw data is **not** committed; see the Phase 1 guide to download it.
+[Helmet Detection](https://www.kaggle.com/datasets/andrewmvd/helmet-detection) (Kaggle, 764 images, 2 classes, Pascal VOC). Raw data is **not** committed; see the Phase 1 guide to download it.
 
 ## What I learned
 
