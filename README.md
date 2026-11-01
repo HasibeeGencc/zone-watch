@@ -1,9 +1,10 @@
 # Zone Watch 🦺
 
-**Real-time helmet detection inside a user-drawn zone.** Draw a rectangle on a live webcam or video feed; a custom-trained YOLO model detects people *with* and *without* a helmet only inside that zone, counts them, and raises an alert when someone without a helmet enters.
+**Real-time helmet detection inside a user-drawn zone.** Draw a rectangle on a webcam or video feed; a custom-trained YOLO model detects heads *with* and *without* a helmet only inside that zone, counts them, and raises an alert when someone without a helmet enters.
 
-<!-- TODO (Phase 4): replace with a real recording -->
-![Demo](docs/images/demo.gif)
+![Demo: the zone turns red and an alert appears when a head without a helmet is inside it](docs/images/demo.gif)
+
+*The demo runs the app on a slideshow of hand-picked test images, chosen to show the alert and the zone filter clearly. Those images are not a measure of accuracy: see [Results](#results) and [Limitations](#limitations).*
 
 ---
 
@@ -44,8 +45,8 @@ flowchart LR
 
 | Phase | What | Where |
 |------:|------|-------|
-| 1 | Annotation review + extra labels in CVAT (local Docker) | [docs/](docs/) |
-| 2 | Reproducible train/val/test split, `data.yaml` | `scripts/` |
+| 1 | Annotation review in CVAT (local Docker) | [docs/cvat_setup.md](docs/cvat_setup.md) |
+| 2 | Label validation, reproducible train/val/test split, `data.yaml` | `scripts/prepare_dataset.py` |
 | 3 | Fine-tuning on Google Colab (free GPU) | `notebooks/train_colab.ipynb` |
 | 4 | ROI detection app | `src/zone_watch/` |
 | 5 | Dockerised inference | `Dockerfile`, [docs/docker.md](docs/docker.md) |
@@ -64,7 +65,13 @@ The rarer *Without Helmet* class is the weak spot: about one in three such boxes
 
 **Speed on CPU** (Ryzen 9 7845HX, including drawing and video saving): about 20 FPS on 1280x720 video, 15 FPS on the same video in Docker, and 5 FPS on portrait 4K video.
 
-The app has been tested by hand on video files. Webcam input uses the same code path but has not been tested with a real camera.
+## Limitations
+
+- **The model does not generalise to every viewpoint.** On a street video filmed mostly from the side and behind, with some motion blur, it found no heads at all in 722 frames, although the test scores looked reasonable. The test images come from the same dataset as the training images, so they could not reveal this.
+- **Alerts are noisy.** About half of the *Without Helmet* boxes on the test split are wrong at the best F1 threshold, and an alert can flicker between frames. Raising `--confidence` trades false alarms for missed people.
+- **Webcam input is untested.** The app has been tested by hand on video files. Webcam input is implemented but has not been run with a real camera.
+
+This is a portfolio project and is not suitable as a safety system.
 
 ## Project structure
 
@@ -122,12 +129,19 @@ Video files work everywhere. Webcam access inside a container works on Linux onl
 
 ## Dataset
 
-[Helmet Detection](https://www.kaggle.com/datasets/andrewmvd/helmet-detection) (Kaggle, 764 images, 2 classes, Pascal VOC). Raw data is **not** committed; see the Phase 1 guide to download it.
+[Helmet Detection](https://www.kaggle.com/datasets/andrewmvd/helmet-detection) (Kaggle, CC0, 764 images, 2 classes, Pascal VOC). Raw data is **not** committed: [docs/cvat_setup.md](docs/cvat_setup.md) explains how to download it.
+
+- A sample of the images was reviewed in CVAT, which added 19 missing boxes in 6 images. The whole dataset was not reviewed, and some labels are still missing.
+- 15 images are excluded because their source annotations have corrupt coordinates (17 boxes), leaving 749 images: 524 train, 151 val and 74 test.
 
 ## What I learned
 
-<!-- TODO: fill in as the project progresses -->
+- **Validate data before training.** Some source boxes had impossible coordinates, far outside the image. They are invisible in CVAT, and Ultralytics discards all labels of an image that has one.
+- **Look at the output, not only the numbers.** My first fix for those boxes divided them by 1000. Every numeric check passed, but drawing the boxes showed them in the wrong places, so I excluded those images instead of guessing.
+- **Test scores have limits.** A test split from the same dataset says little about footage that looks different, as the street video above showed.
+- **Report the class that matters.** Overall recall was 0.805, but the class that triggers the alert reached only 0.681.
+- **Per-class NMS can double-count.** The model could put two boxes of different classes on one head, which raised false alerts. Class-agnostic NMS removed those duplicates.
 
 ## License
 
-MIT (code). Dataset subject to its original licence on Kaggle.
+Code: [MIT](LICENSE). Dataset: CC0, as listed on Kaggle.
