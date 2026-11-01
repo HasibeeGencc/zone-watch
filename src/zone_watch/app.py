@@ -81,6 +81,29 @@ def window_was_closed() -> bool:
     return cv2.getWindowProperty(WINDOW_NAME, cv2.WND_PROP_VISIBLE) < 1
 
 
+def fit_scale(width: int, height: int, max_width: int, max_height: int) -> float:
+    """Return the factor that fits a frame in the given size, never enlarging it."""
+    return min(1.0, max_width / width, max_height / height)
+
+
+def open_window(selector: RoiSelector, scale: float) -> None:
+    """Create the window and send it mouse events in frame coordinates."""
+
+    def on_mouse(event: int, x: int, y: int, *_: object) -> None:
+        # The window shows a shrunken frame, but the zone is in original pixels.
+        selector.handle_mouse(event, round(x / scale), round(y / scale))
+
+    cv2.namedWindow(WINDOW_NAME)
+    cv2.setMouseCallback(WINDOW_NAME, on_mouse)
+
+
+def show_frame(canvas: np.ndarray, scale: float) -> None:
+    """Show the frame in the window, shrunk to fit if needed."""
+    if scale < 1.0:
+        canvas = cv2.resize(canvas, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
+    cv2.imshow(WINDOW_NAME, canvas)
+
+
 def run(config: AppConfig, options: RunOptions) -> None:
     """Open the source and process frames until it ends or the user quits."""
     detector = Detector(config)
@@ -97,14 +120,14 @@ def run(config: AppConfig, options: RunOptions) -> None:
             raise SystemExit(f"The zone is too small or outside the {width}x{height} frame: {roi}")
         selector = RoiSelector(width, height, roi)
 
+        scale = fit_scale(width, height, config.max_display_width, config.max_display_height)
         if options.display:
-            cv2.namedWindow(WINDOW_NAME)
-            cv2.setMouseCallback(WINDOW_NAME, selector.handle_mouse)
+            open_window(selector, scale)
         if options.save_video:
             writer = create_video_writer(options.save_video, capture, frame)
 
         with EventLogger(config.log_path, detector.class_names) as logger:
-            frames_done = process_frames(capture, frame, selector, detector, logger, writer, options)
+            frames_done = process_frames(capture, frame, selector, detector, logger, writer, options, scale)
     finally:
         capture.release()
         if writer is not None:
@@ -125,6 +148,7 @@ def process_frames(
     logger: EventLogger,
     writer: cv2.VideoWriter | None,
     options: RunOptions,
+    display_scale: float,
 ) -> int:
     """Run the frame loop and return how many frames were processed."""
     # A video file waits on its current frame until a zone exists, otherwise it would
@@ -151,7 +175,7 @@ def process_frames(
             meter.restart()
 
         if options.display:
-            cv2.imshow(WINDOW_NAME, canvas)
+            show_frame(canvas, display_scale)
             key = cv2.waitKey(1) & 0xFF
             if key == ord("q") or window_was_closed():
                 break

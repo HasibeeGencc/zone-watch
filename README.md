@@ -62,7 +62,9 @@ YOLO11n fine-tuned on 524 images, measured on the held-out test split (74 images
 
 The rarer *Without Helmet* class is the weak spot: about one in three such boxes is missed. The test split is small (48 *Without Helmet* boxes), so these numbers carry real uncertainty.
 
-**Speed:** about 20 FPS on CPU (Ryzen 9 7845HX, 1280x720 video, including drawing and video saving).
+**Speed on CPU** (Ryzen 9 7845HX, including drawing and video saving): about 20 FPS on 1280x720 video, 15 FPS on the same video in Docker, and 5 FPS on portrait 4K video.
+
+The app has been tested by hand on video files. Webcam input uses the same code path but has not been tested with a real camera.
 
 ## Project structure
 

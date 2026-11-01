@@ -5,3 +5,5 @@ image_size: 640         # must match the training size for comparable results
 device: null            # null picks a GPU if available; or "cpu", "0"
 alert_class: Without Helmet
 log_path: logs/events.csv
+max_display_width: 1280   # larger videos are shrunk to fit the window, not the saved video
+max_display_height: 720

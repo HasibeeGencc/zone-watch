@@ -1,6 +1,6 @@
 """Load the app settings from a YAML file."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 import yaml
@@ -16,6 +16,8 @@ class AppConfig:
     device: str | None
     alert_class: str
     log_path: Path
+    max_display_width: int
+    max_display_height: int
 
 
 def load_config(path: Path) -> AppConfig:
@@ -32,11 +34,9 @@ def load_config(path: Path) -> AppConfig:
         raise SystemExit(f"Invalid config file {path}: {error}") from error
 
     # YAML reads these as plain strings, and a device like 0 as a number.
-    return AppConfig(
+    return replace(
+        config,
         model_path=Path(config.model_path),
-        confidence=config.confidence,
-        image_size=config.image_size,
         device=None if config.device is None else str(config.device),
-        alert_class=config.alert_class,
         log_path=Path(config.log_path),
     )

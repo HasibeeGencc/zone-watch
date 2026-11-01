@@ -4,6 +4,7 @@ import csv
 
 import cv2
 
+from zone_watch.app import fit_scale, open_window
 from zone_watch.detection import Detection, build_zone_state, filter_in_roi
 from zone_watch.events import EventLogger
 from zone_watch.roi import Roi, RoiSelector
@@ -86,6 +87,29 @@ def test_alert_is_raised_only_for_the_alert_class() -> None:
     state = build_zone_state([helmet, no_helmet, no_helmet], CLASSES, ALERT_CLASS)
     assert state.alert
     assert state.counts == {"With Helmet": 1, ALERT_CLASS: 2}
+
+
+def test_fit_scale_shrinks_a_portrait_4k_frame_to_fit_both_sides() -> None:
+    scale = fit_scale(2160, 3840, 1280, 720)
+    assert 2160 * scale <= 1280
+    assert 3840 * scale == 720
+
+
+def test_fit_scale_never_enlarges_a_small_frame() -> None:
+    assert fit_scale(640, 480, 1280, 720) == 1.0
+
+
+def test_mouse_in_a_shrunken_window_draws_the_zone_in_frame_pixels(monkeypatch) -> None:
+    callbacks = []
+    monkeypatch.setattr(cv2, "namedWindow", lambda name: None)
+    monkeypatch.setattr(cv2, "setMouseCallback", lambda name, callback: callbacks.append(callback))
+    selector = RoiSelector(2160, 3840)
+
+    open_window(selector, 0.1875)
+    callbacks[0](cv2.EVENT_LBUTTONDOWN, 20, 40, 0, None)
+    callbacks[0](cv2.EVENT_LBUTTONUP, 385, 700, 0, None)
+
+    assert selector.roi == Roi(107, 213, 2053, 3733)
 
 
 def test_logger_writes_only_changes(tmp_path) -> None:
