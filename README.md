@@ -41,11 +41,17 @@ flowchart LR
 
 ## Results
 
-<!-- TODO (Phase 3): fill from the Colab run -->
+YOLO11n fine-tuned on 524 images, measured on the held-out test split (74 images, 152 boxes):
 
-| Model | mAP@50 | mAP@50-95 | Precision | Recall | FPS (CPU) |
-|-------|-------:|----------:|----------:|-------:|----------:|
-| YOLO nano | – | – | – | – | – |
+| Class | Precision | Recall | mAP@50 | mAP@50-95 |
+|-------|----------:|-------:|-------:|----------:|
+| All | 0.625 | 0.805 | 0.734 | 0.440 |
+| With Helmet | 0.728 | 0.928 | 0.861 | 0.514 |
+| Without Helmet | 0.521 | 0.681 | 0.607 | 0.365 |
+
+The rarer *Without Helmet* class is the weak spot: about one in three such boxes is missed. The test split is small (48 *Without Helmet* boxes), so these numbers carry real uncertainty.
+
+<!-- TODO (Phase 4): add measured FPS -->
 
 ## Project structure
 
