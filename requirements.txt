@@ -1,15 +1,9 @@
-# Dependencies for the Zone Watch app and scripts (Python 3.11).
+# Dependencies for the Zone Watch app (Python 3.11), also used by the Docker image.
 # Pinned so results are reproducible. On Windows, PyPI's torch wheel is CPU-only;
-# the Docker image (Phase 5) installs the CPU-only torch wheel explicitly.
+# the Dockerfile installs the CPU-only wheel explicitly.
 ultralytics==8.4.197
 torch==2.15.0
 torchvision==0.29.2
 opencv-python==4.10.0.84
 numpy==1.26.4
 PyYAML==6.0.2
-
-# Dataset download (Phase 1)
-kaggle==1.6.17
-
-# Tests
-pytest==9.2.0

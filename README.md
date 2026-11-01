@@ -48,7 +48,7 @@ flowchart LR
 | 2 | Reproducible train/val/test split, `data.yaml` | `scripts/` |
 | 3 | Fine-tuning on Google Colab (free GPU) | `notebooks/train_colab.ipynb` |
 | 4 | ROI detection app | `src/zone_watch/` |
-| 5 | Dockerised inference | `Dockerfile` |
+| 5 | Dockerised inference | `Dockerfile`, [docs/docker.md](docs/docker.md) |
 
 ## Results
 
@@ -102,7 +102,21 @@ Run without a window by giving the zone as `x1,y1,x2,y2`:
 python -m zone_watch --source path/to/video.mp4 --roi 100,100,800,600 --no-display --save-video outputs/annotated.mp4
 ```
 
-Defaults such as the model path and confidence threshold are in `configs/app.yaml`. Events go to `logs/events.csv`. Run the tests with `pytest`.
+Defaults such as the model path and confidence threshold are in `configs/app.yaml`. Events go to `logs/events.csv`. To run the tests:
+
+```bash
+pip install -r requirements-dev.txt
+pytest
+```
+
+### Docker
+
+```bash
+docker compose build
+docker compose run --rm zone-watch --source videos/input.mp4 --roi 100,100,800,600 --no-display --save-video outputs/annotated.mp4
+```
+
+Video files work everywhere. Webcam access inside a container works on Linux only: see [docs/docker.md](docs/docker.md).
 
 ## Dataset
 

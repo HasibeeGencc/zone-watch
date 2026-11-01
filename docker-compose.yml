@@ -1,0 +1,10 @@
+# Saves typing the image name and folder mounts on every run. See docs/docker.md.
+services:
+  zone-watch:
+    build: .
+    image: zone-watch:latest
+    volumes:
+      - ./models:/app/models:ro
+      - ./videos:/app/videos:ro
+      - ./outputs:/app/outputs
+      - ./logs:/app/logs

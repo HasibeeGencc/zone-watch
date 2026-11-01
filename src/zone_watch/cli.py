@@ -58,4 +58,8 @@ def main() -> None:
     if not 0 <= config.confidence <= 1:
         parser.error(f"confidence must be between 0 and 1, got {config.confidence}")
 
-    run(config, RunOptions(args.source, args.roi, not args.no_display, args.save_video))
+    try:
+        run(config, RunOptions(args.source, args.roi, not args.no_display, args.save_video))
+    except KeyboardInterrupt:
+        # Without a window, Ctrl+C is the normal way to stop a webcam run.
+        print("Stopped.")

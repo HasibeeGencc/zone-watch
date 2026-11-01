@@ -1,0 +1,18 @@
+# Everything here stays out of the build context, which keeps builds fast.
+# The data folder alone is over 1 GB.
+.git/
+.venv/
+data/
+models/
+videos/
+logs/
+outputs/
+runs/
+notebooks/
+scripts/
+tests/
+docs/
+**/__pycache__/
+**/*.egg-info/
+*.pt
+*.mp4

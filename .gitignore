@@ -13,6 +13,7 @@ outputs/
 *.mp4
 *.avi
 logs/
+videos/
 
 # --- Secrets ---
 kaggle.json

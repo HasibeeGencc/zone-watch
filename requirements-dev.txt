@@ -1,0 +1,4 @@
+# Everything above, plus the tools for downloading the dataset and running the tests.
+-r requirements.txt
+kaggle==1.6.17
+pytest==9.2.0
