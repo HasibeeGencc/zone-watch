@@ -1,0 +1,41 @@
+# --- Data & models: never commit (large, and the dataset has its own licence) ---
+data/*
+!data/.gitkeep
+models/*
+!models/.gitkeep
+*.pt
+*.onnx
+*.engine
+
+# --- Training / inference outputs ---
+runs/
+outputs/
+*.mp4
+*.avi
+logs/
+
+# --- Secrets ---
+kaggle.json
+.env
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- Jupyter ---
+.ipynb_checkpoints/
+
+# --- Editors / OS ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# --- Local CVAT clone (lives outside this repo, but just in case) ---
+cvat/
