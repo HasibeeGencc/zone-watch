@@ -27,7 +27,18 @@ flowchart LR
     E --> G[CSV event log]
 ```
 
-<!-- TODO (Phase 4): add an app-level diagram (frame → detect → ROI filter → overlay/alert → log) -->
+Each frame in the app goes through the same steps:
+
+```mermaid
+flowchart LR
+    S[Webcam or video] --> D[YOLO detection]
+    M[Mouse-drawn zone] --> F
+    D --> F[Keep boxes centred in the zone]
+    F --> C[Counts and alert check]
+    C --> O[Overlay on frame]
+    C --> L[CSV log, on count changes]
+    O --> W[Window and optional video]
+```
 
 ## Pipeline
 
@@ -51,7 +62,7 @@ YOLO11n fine-tuned on 524 images, measured on the held-out test split (74 images
 
 The rarer *Without Helmet* class is the weak spot: about one in three such boxes is missed. The test split is small (48 *Without Helmet* boxes), so these numbers carry real uncertainty.
 
-<!-- TODO (Phase 4): add measured FPS -->
+**Speed:** about 20 FPS on CPU (Ryzen 9 7845HX, 1280x720 video, including drawing and video saving).
 
 ## Project structure
 
@@ -63,18 +74,35 @@ zone-watch/
 ├── models/       # trained weights, e.g. best.pt (git-ignored)
 ├── notebooks/    # Colab training notebook
 ├── scripts/      # data download / prep utilities
-└── src/zone_watch/  # the application package
+├── src/zone_watch/  # the application package
+└── tests/        # tests for the zone, alert and logging logic
 ```
 
 ## Getting started
 
-<!-- TODO (Phase 4/5): exact commands -->
+Trained weights are not in the repo: put your `best.pt` in `models/`.
 
 ```bash
 python -m venv .venv
 .venv\Scripts\activate          # Windows  (Linux/Mac: source .venv/bin/activate)
 pip install -r requirements.txt
+pip install -e .
 ```
+
+Run on a webcam or a video file, then drag with the mouse to draw the zone (`r` resets it, `q` quits):
+
+```bash
+python -m zone_watch --source 0
+python -m zone_watch --source path/to/video.mp4 --save-video outputs/annotated.mp4
+```
+
+Run without a window by giving the zone as `x1,y1,x2,y2`:
+
+```bash
+python -m zone_watch --source path/to/video.mp4 --roi 100,100,800,600 --no-display --save-video outputs/annotated.mp4
+```
+
+Defaults such as the model path and confidence threshold are in `configs/app.yaml`. Events go to `logs/events.csv`. Run the tests with `pytest`.
 
 ## Dataset
 

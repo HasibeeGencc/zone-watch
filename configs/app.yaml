@@ -1,0 +1,7 @@
+# Default settings for the Zone Watch app. Command-line options override these values.
+model_path: models/best.pt
+confidence: 0.25        # boxes below this confidence are ignored
+image_size: 640         # must match the training size for comparable results
+device: null            # null picks a GPU if available; or "cpu", "0"
+alert_class: Without Helmet
+log_path: logs/events.csv
