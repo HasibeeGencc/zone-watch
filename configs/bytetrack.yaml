@@ -1,0 +1,9 @@
+# ByteTrack settings, kept here so that an Ultralytics update cannot change them silently.
+# When tracking is on, these thresholds decide which boxes count, not `confidence` in app.yaml.
+tracker_type: bytetrack
+track_high_thresh: 0.25   # boxes above this are matched to tracks first
+track_low_thresh: 0.1     # weaker boxes can only continue an existing track
+new_track_thresh: 0.25    # a new track, and so a new ID, needs at least this
+track_buffer: 30          # frames a lost track can be recovered and keep its ID
+match_thresh: 0.8
+fuse_score: true

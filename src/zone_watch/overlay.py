@@ -56,6 +56,8 @@ def draw_detections(frame: np.ndarray, detections: list[Detection], alert_class:
         bottom_right = int(detection.x2), int(detection.y2)
         cv2.rectangle(frame, top_left, bottom_right, color, round(BOX_THICKNESS * ui))
         label = f"{detection.class_name} {detection.confidence:.2f}"
+        if detection.track_id is not None:
+            label = f"#{detection.track_id} {label}"
         # Keep the label inside the frame when a box touches the top edge.
         label_position = top_left[0], max(top_left[1] - round(2 * ui), round(20 * ui))
         draw_text(frame, label, label_position, WHITE, color, scale=0.5)

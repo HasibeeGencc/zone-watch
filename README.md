@@ -14,6 +14,7 @@
 - Custom fine-tuned **YOLO** detector (Ultralytics), 2 classes
 - Interactive **ROI** drawn with the mouse, centre-in-zone filtering, live counts and FPS
 - Visual + logged **alerts** (CSV event log), optional annotated video export
+- Optional **ByteTrack** object IDs with "entered/left zone" events
 - Config-driven (no hard-coded paths/thresholds), type-hinted, documented code
 
 ## Architecture
@@ -69,6 +70,7 @@ The rarer *Without Helmet* class is the weak spot: about one in three such boxes
 
 - **The model does not generalise to every viewpoint.** On a street video filmed mostly from the side and behind, with some motion blur, it found no heads at all in 722 frames, although the test scores looked reasonable. The test images come from the same dataset as the training images, so they could not reveal this.
 - **Alerts are noisy.** About half of the *Without Helmet* boxes on the test split are wrong at the best F1 threshold, and an alert can flicker between frames. Raising `--confidence` trades false alarms for missed people.
+- **Tracking IDs are not identities.** An object that is out of view for too long comes back with a new ID, and counts as a new entry. A track's class can also change between frames, so `left` rows report its most common class.
 - **Webcam input is untested.** The app has been tested by hand on video files. Webcam input is implemented but has not been run with a real camera.
 
 This is a portfolio project and is not suitable as a safety system.
@@ -105,6 +107,12 @@ python -m zone_watch --source 0
 python -m zone_watch --source path/to/video.mp4 --save-video outputs/annotated.mp4
 ```
 
+Add `--track` to give each object an ID with ByteTrack and log when it enters or leaves the zone to `logs/zone_events.csv`:
+
+```bash
+python -m zone_watch --source path/to/video.mp4 --track
+```
+
 Run without a window by giving the zone as `x1,y1,x2,y2`:
 
 ```bash
@@ -125,7 +133,7 @@ docker compose build
 docker compose run --rm zone-watch --source videos/input.mp4 --roi 100,100,800,600 --no-display --save-video outputs/annotated.mp4
 ```
 
-Video files work everywhere. Webcam access inside a container works on Linux only: see [docs/docker.md](docs/docker.md).
+Video files work everywhere. Webcam access inside a container is documented for Linux only: see [docs/docker.md](docs/docker.md).
 
 ## Dataset
 

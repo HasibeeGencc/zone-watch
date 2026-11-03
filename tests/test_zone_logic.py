@@ -6,8 +6,9 @@ import cv2
 
 from zone_watch.app import fit_scale, open_window
 from zone_watch.detection import Detection, build_zone_state, filter_in_roi
-from zone_watch.events import EventLogger
+from zone_watch.events import EventLogger, ZoneEventLogger
 from zone_watch.roi import Roi, RoiSelector
+from zone_watch.zone_presence import ENTERED, LEFT, ZoneEvent, ZonePresence
 
 CLASSES = ["With Helmet", "Without Helmet"]
 ALERT_CLASS = "Without Helmet"
@@ -139,3 +140,69 @@ def test_logger_appends_without_repeating_the_header(tmp_path) -> None:
     lines = path.read_text(encoding="utf-8").splitlines()
     assert lines[0] == "timestamp,frame,class,count"
     assert len(lines) == 3
+
+
+def tracked(track_id: int, class_name: str = "With Helmet") -> Detection:
+    return Detection(class_name, 0.9, 0, 0, 10, 10, track_id=track_id)
+
+
+def test_presence_logs_an_entry_only_once() -> None:
+    presence = ZonePresence(grace_frames=2)
+    assert presence.update(0, [tracked(1)]) == [ZoneEvent(0, 1, "With Helmet", ENTERED)]
+    assert presence.update(1, [tracked(1)]) == []
+
+
+def test_presence_ignores_boxes_without_an_id() -> None:
+    presence = ZonePresence(grace_frames=2)
+    assert presence.update(0, [make_detection("With Helmet", 0, 0, 10, 10)]) == []
+
+
+def test_brief_miss_within_the_grace_period_logs_nothing() -> None:
+    presence = ZonePresence(grace_frames=2)
+    presence.update(0, [tracked(1)])
+    assert presence.update(1, []) == []
+    assert presence.update(2, []) == []
+    assert presence.update(3, [tracked(1)]) == []
+
+
+def test_object_leaves_once_the_grace_period_is_over() -> None:
+    presence = ZonePresence(grace_frames=2)
+    presence.update(0, [tracked(1)])
+    presence.update(1, [])
+    presence.update(2, [])
+    assert presence.update(3, []) == [ZoneEvent(3, 1, "With Helmet", LEFT)]
+    assert presence.update(4, []) == []
+
+
+def test_object_that_returns_after_leaving_enters_again() -> None:
+    presence = ZonePresence(grace_frames=0)
+    presence.update(0, [tracked(1)])
+    presence.update(1, [])
+    assert presence.update(2, [tracked(1)]) == [ZoneEvent(2, 1, "With Helmet", ENTERED)]
+
+
+def test_left_event_reports_the_most_common_class() -> None:
+    presence = ZonePresence(grace_frames=0)
+    presence.update(0, [tracked(1, ALERT_CLASS)])
+    presence.update(1, [tracked(1)])
+    presence.update(2, [tracked(1)])
+    assert presence.update(3, []) == [ZoneEvent(3, 1, "With Helmet", LEFT)]
+
+
+def test_objects_are_followed_separately() -> None:
+    presence = ZonePresence(grace_frames=0)
+    presence.update(0, [tracked(1), tracked(2, ALERT_CLASS)])
+    assert presence.update(1, [tracked(1)]) == [ZoneEvent(1, 2, ALERT_CLASS, LEFT)]
+
+
+def test_zone_event_logger_writes_entries_and_exits(tmp_path) -> None:
+    path = tmp_path / "zone_events.csv"
+    with ZoneEventLogger(path, grace_frames=0) as logger:
+        logger.update(5, [tracked(7, ALERT_CLASS)])
+        logger.update(6, [tracked(7, ALERT_CLASS)])
+        logger.update(7, [])
+
+    with path.open(encoding="utf-8") as file:
+        rows = list(csv.DictReader(file))
+    logged = [(row["frame"], row["track_id"], row["class"], row["event"]) for row in rows]
+    assert logged == [("5", "7", ALERT_CLASS, ENTERED), ("7", "7", ALERT_CLASS, LEFT)]

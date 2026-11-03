@@ -1,6 +1,7 @@
 """The main loop: read a frame, detect, filter by zone, draw, log and display."""
 
 import time
+from contextlib import nullcontext
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -9,7 +10,7 @@ import numpy as np
 
 from zone_watch.config import AppConfig
 from zone_watch.detection import Detector, ZoneState, build_zone_state, filter_in_roi
-from zone_watch.events import EventLogger
+from zone_watch.events import EventLogger, ZoneEventLogger
 from zone_watch.overlay import draw_frame
 from zone_watch.roi import Roi, RoiSelector
 
@@ -126,8 +127,15 @@ def run(config: AppConfig, options: RunOptions) -> None:
         if options.save_video:
             writer = create_video_writer(options.save_video, capture, frame)
 
-        with EventLogger(config.log_path, detector.class_names) as logger:
-            frames_done = process_frames(capture, frame, selector, detector, logger, writer, options, scale)
+        zone_log = (
+            ZoneEventLogger(config.zone_events_path, config.leave_grace_frames)
+            if config.tracking
+            else nullcontext()
+        )
+        with EventLogger(config.log_path, detector.class_names) as logger, zone_log as zone_logger:
+            frames_done = process_frames(
+                capture, frame, selector, detector, logger, zone_logger, writer, options, scale
+            )
     finally:
         capture.release()
         if writer is not None:
@@ -136,6 +144,8 @@ def run(config: AppConfig, options: RunOptions) -> None:
             cv2.destroyAllWindows()
 
     print(f"Processed {frames_done} frames. Events logged to {config.log_path}")
+    if config.tracking:
+        print(f"Zone entries and exits logged to {config.zone_events_path}")
     if options.save_video:
         print(f"Annotated video saved to {options.save_video}")
 
@@ -146,6 +156,7 @@ def process_frames(
     selector: RoiSelector,
     detector: Detector,
     logger: EventLogger,
+    zone_logger: ZoneEventLogger | None,
     writer: cv2.VideoWriter | None,
     options: RunOptions,
     display_scale: float,
@@ -167,6 +178,8 @@ def process_frames(
 
         if not waiting_for_zone:
             logger.update(frame_index, state.counts)
+            if zone_logger is not None:
+                zone_logger.update(frame_index, state.detections)
             if writer is not None:
                 writer.write(canvas)
             frame_index += 1

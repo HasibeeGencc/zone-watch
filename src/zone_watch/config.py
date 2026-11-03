@@ -18,6 +18,10 @@ class AppConfig:
     log_path: Path
     max_display_width: int
     max_display_height: int
+    tracking: bool
+    tracker_config: Path
+    zone_events_path: Path
+    leave_grace_frames: int
 
 
 def load_config(path: Path) -> AppConfig:
@@ -39,4 +43,6 @@ def load_config(path: Path) -> AppConfig:
         model_path=Path(config.model_path),
         device=None if config.device is None else str(config.device),
         log_path=Path(config.log_path),
+        tracker_config=Path(config.tracker_config),
+        zone_events_path=Path(config.zone_events_path),
     )

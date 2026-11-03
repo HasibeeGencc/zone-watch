@@ -7,3 +7,9 @@ alert_class: Without Helmet
 log_path: logs/events.csv
 max_display_width: 1280   # larger videos are shrunk to fit the window, not the saved video
 max_display_height: 720
+
+# Object tracking: gives each object an ID and logs when it enters or leaves the zone.
+tracking: false         # also enabled with --track
+tracker_config: configs/bytetrack.yaml
+zone_events_path: logs/zone_events.csv
+leave_grace_frames: 15  # an object counts as gone only after this many frames unseen

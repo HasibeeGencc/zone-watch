@@ -10,6 +10,9 @@ from ultralytics import YOLO
 from zone_watch.config import AppConfig
 from zone_watch.roi import Roi
 
+# Matches track_low_thresh in configs/bytetrack.yaml.
+TRACKER_MIN_CONFIDENCE = 0.1
+
 
 @dataclass(frozen=True)
 class Detection:
@@ -21,6 +24,7 @@ class Detection:
     y1: float
     x2: float
     y2: float
+    track_id: int | None = None
 
     @property
     def centre(self) -> tuple[float, float]:
@@ -57,22 +61,34 @@ class Detector:
         return YOLO(str(path))
 
     def detect(self, frame: np.ndarray) -> list[Detection]:
-        """Return every box the model finds in a BGR frame."""
-        result = self.model.predict(
-            frame,
-            conf=self.config.confidence,
-            imgsz=self.config.image_size,
-            device=self.config.device,
+        """Return every box the model finds in a BGR frame, with IDs if tracking is on."""
+        options = {
+            "imgsz": self.config.image_size,
+            "device": self.config.device,
             # One head should count once: without this, overlapping boxes of different
             # classes both survive and one person can raise a false alert.
-            agnostic_nms=True,
-            verbose=False,
-        )[0]
+            "agnostic_nms": True,
+            "verbose": False,
+        }
+        if self.config.tracking:
+            # ByteTrack needs the weak boxes too, and applies its own thresholds to them.
+            result = self.model.track(
+                frame, conf=TRACKER_MIN_CONFIDENCE, tracker=str(self.config.tracker_config),
+                persist=True, **options,
+            )[0]
+        else:
+            result = self.model.predict(frame, conf=self.config.confidence, **options)[0]
+
         boxes = result.boxes
+        # The tracker leaves the IDs empty when a frame has no tracked objects.
+        track_ids = boxes.id.tolist() if boxes.id is not None else [None] * len(boxes)
         return [
-            Detection(self.model.names[int(class_id)], float(confidence), *map(float, corners))
-            for class_id, confidence, corners in zip(
-                boxes.cls.tolist(), boxes.conf.tolist(), boxes.xyxy.tolist()
+            Detection(
+                self.model.names[int(class_id)], float(confidence), *map(float, corners),
+                track_id=None if track_id is None else int(track_id),
+            )
+            for class_id, confidence, corners, track_id in zip(
+                boxes.cls.tolist(), boxes.conf.tolist(), boxes.xyxy.tolist(), track_ids
             )
         ]
 

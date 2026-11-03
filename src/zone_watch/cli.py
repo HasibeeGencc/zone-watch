@@ -34,6 +34,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--save-video", type=Path, help="write the annotated video to this file")
     parser.add_argument("--roi", type=parse_roi, help="start with this zone, as x1,y1,x2,y2")
     parser.add_argument("--no-display", action="store_true", help="run without a window; requires --roi")
+    parser.add_argument("--track", action="store_true", help="give objects IDs and log zone entries and exits")
     return parser
 
 
@@ -43,6 +44,7 @@ def apply_overrides(config: AppConfig, args: argparse.Namespace) -> AppConfig:
         "model_path": args.model,
         "confidence": args.confidence,
         "log_path": args.log,
+        "tracking": True if args.track else None,
     }
     return replace(config, **{key: value for key, value in overrides.items() if value is not None})
 
