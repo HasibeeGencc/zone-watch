@@ -66,6 +66,19 @@ The rarer *Without Helmet* class is the weak spot: about one in three such boxes
 
 **Speed on CPU** (Ryzen 9 7845HX, including drawing and video saving): about 20 FPS on 1280x720 video, 15 FPS on the same video in Docker, and 5 FPS on portrait 4K video.
 
+### Nano vs small
+
+Both models were trained the same way and measured on the same computer with `scripts/compare_models.py`:
+
+| Model | Split | mAP@50 | mAP@50-95 | *Without Helmet* precision | *Without Helmet* recall | *Without Helmet* mAP@50 | FPS (CPU, model only) | Size (MB) |
+|-------|-------|-------:|----------:|---------------------------:|------------------------:|------------------------:|----------------------:|----------:|
+| YOLO11n | val | 0.854 | 0.521 | 0.758 | 0.695 | 0.795 | 27.6 | 5.5 |
+| YOLO11n | test | 0.734 | 0.441 | 0.521 | 0.681 | 0.607 | 27.6 | 5.5 |
+| YOLO11s | val | 0.829 | 0.512 | 0.804 | 0.695 | 0.750 | 16.5 | 19.2 |
+| YOLO11s | test | 0.726 | 0.429 | 0.624 | 0.691 | 0.602 | 16.5 | 19.2 |
+
+**The app uses YOLO11n.** The choice was made on the val rows: the small model is about 40% slower and 3.5 times larger, with a lower mAP and the same *Without Helmet* recall. Its higher precision is its one advantage. Each model was trained only once and the splits are small, so small differences here may not be meaningful.
+
 ## Limitations
 
 - **The model does not generalise to every viewpoint.** On a street video filmed mostly from the side and behind, with some motion blur, it found no heads at all in 722 frames, although the test scores looked reasonable. The test images come from the same dataset as the training images, so they could not reveal this.
@@ -147,6 +160,7 @@ Video files work everywhere. Webcam access inside a container is documented for 
 - **Validate data before training.** Some source boxes had impossible coordinates, far outside the image. They are invisible in CVAT, and Ultralytics discards all labels of an image that has one.
 - **Look at the output, not only the numbers.** My first fix for those boxes divided them by 1000. Every numeric check passed, but drawing the boxes showed them in the wrong places, so I excluded those images instead of guessing.
 - **Test scores have limits.** A test split from the same dataset says little about footage that looks different, as the street video above showed.
+- **A bigger model is not automatically better.** With only 524 training images, YOLO11s did not beat YOLO11n on mAP, despite having over three times the parameters.
 - **Report the class that matters.** Overall recall was 0.805, but the class that triggers the alert reached only 0.681.
 - **Per-class NMS can double-count.** The model could put two boxes of different classes on one head, which raised false alerts. Class-agnostic NMS removed those duplicates.
 
