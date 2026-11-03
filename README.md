@@ -152,4 +152,4 @@ Video files work everywhere. Webcam access inside a container is documented for 
 
 ## License
 
-Code: [MIT](LICENSE). Dataset: CC0, as listed on Kaggle.
+Code: [AGPL-3.0](LICENSE), because the app is built on [Ultralytics](https://github.com/ultralytics/ultralytics), which uses the same license. Dataset: CC0, as listed on Kaggle.
