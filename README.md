@@ -1,5 +1,7 @@
 # Zone Watch 🦺
 
+[![CI](https://github.com/HasibeeGencc/zone-watch/actions/workflows/ci.yml/badge.svg)](https://github.com/HasibeeGencc/zone-watch/actions/workflows/ci.yml)
+
 **Real-time helmet detection inside a user-drawn zone.** Draw a rectangle on a webcam or video feed; a custom-trained YOLO model detects heads *with* and *without* a helmet only inside that zone, counts them, and raises an alert when someone without a helmet enters.
 
 ![Demo: the zone turns red and an alert appears when a head without a helmet is inside it](docs/images/demo.gif)
